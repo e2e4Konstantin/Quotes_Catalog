@@ -3,10 +3,8 @@ import gc
 from pandas import DataFrame
 from pprint import pprint
 
-
 from filesutils import check_full_file_name, get_full_file_name, out_error_message_and_exit
 from settings import item_patterns, catalog, Chapter, Collection, Section, Subsection, Table
-
 
 
 def data_frame_info(df: DataFrame, mode: str = 'short'):
@@ -221,7 +219,7 @@ def read_catalog(file_name: str = None, file_path: str = None, sheet_name: str =
 
 if __name__ == "__main__":
     # path = r"F:\Kazak\GoogleDrive\1_KK\Job_CNAC\Python_projects\Quote_Catalog\src"
-    path = r"C:\Users\kazak.ke\PycharmProjects\Quotes_Catalog\src"
+    path = r"/src"
     file = r"catalog_3.xlsx"
     sheet = 'catalog'
     read_catalog(file, path, sheet)
