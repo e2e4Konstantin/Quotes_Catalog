@@ -15,11 +15,12 @@ item_patterns = {
 class Quote(BaseModel):
     code: str = Field(pattern=item_patterns['quote'])  # 3.1-24-1
     title: str
-    table: str = Field(pattern=item_patterns['table'])  # 3.1-1-5-0-24
+    measure: str
+    table: str | None = Field(pattern=item_patterns['table'])  # 3.1-1-5-0-24
     subsection: str | None = Field(pattern=item_patterns['subsection'])
     section: str | None = Field(pattern=item_patterns['section'])
     collection: str | None = Field(pattern=item_patterns['collection'])
-    chapter: str = Field(pattern=item_patterns['chapter'])
+    chapter: str | None = Field(pattern=item_patterns['chapter'])
 
 
 class Table(BaseModel):
@@ -74,7 +75,7 @@ catalog = Catalog()
 
 if __name__ == "__main__":
     quote = Quote(code='3.1-24-1', title='Срезка недобора грунта в выемках группа грунтов 1-3',
-                  table='3.1-1-5-0-24', chapter='9', collection=None, section=None, subsection=None)
+                  measure='100 м3 грунта', table='3.1-1-5-0-24', chapter='9', collection=None, section=None, subsection=None)
     table = Table(code='9.1-1-1-0-2', subsection='9.1-1-1',
                   title='Временное отопление, законченных вчерне производственных зданий промышленных предприятий',
                   chapter='9', collection=None, section=None)

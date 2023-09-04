@@ -4,7 +4,7 @@ from pandas import DataFrame
 from pprint import pprint
 
 from filesutils import check_full_file_name, get_full_file_name, out_error_message_and_exit
-from settings import item_patterns, catalog, Chapter, Collection, Section, Subsection, Table
+from settings import item_patterns, catalog, Chapter, Collection, Section, Subsection, Table, Quote
 
 
 def data_frame_info(df: DataFrame, mode: str = 'short'):
@@ -172,9 +172,24 @@ def table_load(data: DataFrame):
 
 
 
-def data_frame_turn_out(file_name: str = None, file_path: str = None, sheet_name: str = None) -> DataFrame | None:
+def quotes_load(data: DataFrame):
+    """ Загружает 'Расценки' в catalog. """
+    for quote in data.to_records(index=False):
+        catalog.quotes[quote[0]] = Quote(code=quote[0], title=quote[1], measure=quote[2], table=None, chapter=None, collection=None, section=None, subsection=None)
+    print(f"Расценок добавлено в каталог: {len(catalog.quotes) = }")
+    pprint(list(catalog.quotes.items())[20:25], width=300)
+
+
+
+
+
+def data_frame_turn_out(file_name: str = None, file_path: str = None, sheet_name: str = None,
+                        out_file_name: str = "") -> DataFrame | None:
     """ Прочитать данные из файла и вернуть DataFrame """
-    parquet_file_name = f"{file_name[:-4]}gzip"
+    if out_file_name:
+        parquet_file_name = f"{out_file_name}.gzip"
+    else:
+        parquet_file_name = f"{file_name[:-4]}gzip"
     parquet_full_name = check_full_file_name(parquet_file_name, file_path)
     df = DataFrame()
     if parquet_full_name:
@@ -199,11 +214,15 @@ def data_frame_turn_out(file_name: str = None, file_path: str = None, sheet_name
 
 
 def read_catalog(file_name: str = None, file_path: str = None, sheet_name: str = None):
-    """ Читает страницу excel файла в catalog """
-    df = data_frame_turn_out(file_name, file_path, sheet_name)
+    """ Читает структуру (таблицы, сборники, отделы, разделы) из excel файла в catalog """
+    df = data_frame_turn_out(file_name, file_path, sheet_name, 'p_catalog')
     if (df is not None) and not df.empty:
-        df.columns = ['CODE', 'TITLE']
-        df = df[['CODE', 'TITLE']].astype(pd.StringDtype())
+        cut_column_names = df.columns[:2]
+        # оставляем только 2 столбца
+        df = df.reindex(columns=cut_column_names)
+        columns = ['CODE', 'TITLE']
+        df.columns = columns
+        df = df[columns].astype(pd.StringDtype())
         data_frame_info(df, mode='full')
         chapter_load(df)
         collection_load(df)
@@ -217,9 +236,28 @@ def read_catalog(file_name: str = None, file_path: str = None, sheet_name: str =
         raise TypeError(OSError)
 
 
+def read_quotes(file_name: str = None, file_path: str = None, sheet_name: str = None):
+    """ Читает расценки из excel файла в catalog """
+    df = data_frame_turn_out(file_name, file_path, sheet_name, 'p_quotes')
+    if (df is not None) and not df.empty:
+        cut_column_names = df.columns[:3]
+        # оставляем только 3 столбца
+        df = df.reindex(columns=cut_column_names)
+        columns = ['CODE', 'TITLE', 'MEASURE']
+        df.columns = columns
+        df = df[columns].astype(pd.StringDtype())
+        data_frame_info(df, mode='full')
+        quotes_load(df)
+        del df
+        gc.collect()
+    else:
+        out_error_message_and_exit(f"пустая страница {sheet_name!r}", get_full_file_name(file_name, file_path))
+        raise TypeError(OSError)
+
+
 if __name__ == "__main__":
     # path = r"F:\Kazak\GoogleDrive\1_KK\Job_CNAC\Python_projects\Quote_Catalog\src"
-    path = r"/src"
+    path = r"../src"
     file = r"catalog_3.xlsx"
-    sheet = 'catalog'
-    read_catalog(file, path, sheet)
+    # read_catalog(file, path, sheet_name='catalog')
+    read_quotes(file, path, sheet_name='quotes')
