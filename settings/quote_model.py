@@ -1,4 +1,7 @@
 from pydantic import BaseModel, Field
+import json
+
+import os
 
 classifier = ['chapters', 'collections', 'sections', 'subsections', 'tables']
 
@@ -70,24 +73,44 @@ class Catalog(BaseModel):
     collections: dict[str, Collection] | None = {}
     chapters: dict[str, Chapter] | None = {}
 
+    def json_damp(self, file_name: str = "", path: str = ""):
+        if file_name:
+            full_name = os.path.abspath(os.path.join("" if path is None else path, file_name))
+        else:
+            full_name = r"catalog.json"
+        with open(full_name, "w", encoding='utf-8') as j_file:
+            json.dump(self.model_dump_json(), j_file, ensure_ascii=False)
 
-catalog = Catalog()
+    def info(self):
+        print(f"В каталоге:")
+        print("\t", f"глав: {len(self.chapters)}")
+        print("\t", f"сборников: {len(self.collections)}")
+        print("\t", f"отелов: {len(self.sections)}")
+        print("\t", f"разделов: {len(self.subsections)}")
+        print("\t", f"расценок: {len(self.quotes)}")
+
+
+
 
 if __name__ == "__main__":
     quote = Quote(code='3.1-24-1', title='Срезка недобора грунта в выемках группа грунтов 1-3',
                   measure='100 м3 грунта', table='3.1-1-5-0-24', chapter='9', collection=None, section=None, subsection=None)
-    table = Table(code='9.1-1-1-0-2', subsection='9.1-1-1',
-                  title='Временное отопление, законченных вчерне производственных зданий промышленных предприятий',
-                  chapter='9', collection=None, section=None)
-    subsection = Subsection(code='8.2-1-1', section='8.2-1', chapter='8', collection=None,
-                            title='Ультразвуковой контроль и механические испытания сварных соединений газопроводов')
-    section = Section(code='8.2-1', collection='8.2', title='Контроль качества сварных соединений', chapter='8')
-    collection = Collection(code='8.2', chapter='8',
-                            title='Контроль качества соединений стальных и полиэтиленовых газопроводов')
-    chapter = Chapter(code='8', title='Нормы накладных расходов и сметной прибыли')
+    print(quote)
+    # table = Table(code='9.1-1-1-0-2', subsection='9.1-1-1',
+    #               title='Временное отопление, законченных вчерне производственных зданий промышленных предприятий',
+    #               chapter='9', collection=None, section=None)
+    # subsection = Subsection(code='8.2-1-1', section='8.2-1', chapter='8', collection=None,
+    #                         title='Ультразвуковой контроль и механические испытания сварных соединений газопроводов')
+    # section = Section(code='8.2-1', collection='8.2', title='Контроль качества сварных соединений', chapter='8')
+    # collection = Collection(code='8.2', chapter='8',
+    #                         title='Контроль качества соединений стальных и полиэтиленовых газопроводов')
+    # chapter = Chapter(code='8', title='Нормы накладных расходов и сметной прибыли')
 
-    print(f" {quote=}\n {table=}\n {subsection=}\n {section=}\n {collection=}\n {chapter=}")
-    print(f"{catalog=}, {catalog.model_dump()}")
+    catalog = Catalog()
+    #
+    # print(f" {quote=}\n {table=}\n {subsection=}\n {section=}\n {collection=}\n {chapter=}")
+    # print(f"{catalog=}, {catalog.model_dump()}")
     catalog.quotes[quote.code] = quote
-    catalog.tables[table.code] = table
+    print(f"{catalog.quotes[quote.code]}")
+    # catalog.tables[table.code] = table
     print(f"{catalog=}, {catalog.model_dump()}")
