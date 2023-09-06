@@ -1,6 +1,6 @@
 from settings import Catalog
 from catalog.read_catalog import catalog_fill
-from catalog.extract_int_code import extract_int_code
+from catalog.extract_code import extract_int_code
 from catalog.get_selected_tables import get_selected_tables
 
 

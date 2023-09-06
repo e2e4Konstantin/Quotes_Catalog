@@ -1,24 +1,26 @@
 from settings import Catalog, ExcelFile
 
+from excelutils.features import create_basic_header
+from excelutils.chapters_output import chapters_output
+
+
+
 
 def data_out_to_excel(catalog: Catalog = None, full_name: str = None, grid: bool = False):
     """ Подготовка выходного файла. Удаляет все содержимое и создает шапку таблицы. """
     sheets_name = ["name", "stat"]
-    output_file = ExcelFile(full_name)
-    with output_file as ex:
+    output = ExcelFile(full_name)
+    with output as ex:
         ex.create_sheets(sheets_name)
-    print(output_file)
-        #
-        # styles_add(ex.book)
-        # ex.sheet = ex.book['name']
-        # ex.set_sheet_grid(grid=grid)
-        # create_basic_header(ex.sheet)
-        #
-        # ex.sheet.sheet_properties.outlinePr.summaryBelow = False    # группировка сверху
-        #
-        # start_table_row = 6
-        # step_table_row = 2
-        # table_row = start_table_row
+        ex.styles_init()
+        ex.sheet = ex.book['name']
+        ex.set_sheet_grid(grid=grid)
+        ex.sheet.sheet_properties.outlinePr.summaryBelow = False  # группировка сверху
+        create_basic_header(ex.sheet)
+
+        start_chapter_row = 4
+        chapters_output(ex.sheet, catalog, start_chapter_row)
+
         #
         # # прочитать данные о всех таблицах
         # tables = get_all_tables_from_data()

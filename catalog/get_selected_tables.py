@@ -1,5 +1,5 @@
 from settings import Catalog
-from catalog.extract_int_code import extract_int_code
+from catalog.extract_code import extract_int_code
 
 
 def get_selected_tables(catalog: Catalog = None, selected_chapter: str | None = '',

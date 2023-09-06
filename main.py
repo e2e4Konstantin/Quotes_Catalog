@@ -11,5 +11,6 @@ def application():
     write_to_excel(catalog)
 
 
+
 if __name__ == "__main__":
     application()
