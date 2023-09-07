@@ -4,22 +4,25 @@ from excelutils.features import create_basic_header
 from excelutils.chapters_output import chapters_output
 
 
-
-
 def data_out_to_excel(catalog: Catalog = None, full_name: str = None, grid: bool = False):
-    """ Подготовка выходного файла. Удаляет все содержимое и создает шапку таблицы. """
+    """ Подготовка выходного файла. Создает шапку таблицы. Выводит главы"""
     sheets_name = ["name", "stat"]
     output = ExcelFile(full_name)
     with output as ex:
         ex.create_sheets(sheets_name)
         ex.styles_init()
         ex.sheet = ex.book['name']
-        ex.set_sheet_grid(grid=grid)
+
         ex.sheet.sheet_properties.outlinePr.summaryBelow = False  # группировка сверху
         create_basic_header(ex.sheet)
-
         start_chapter_row = 4
+
         chapters_output(ex.sheet, catalog, start_chapter_row)
+
+        ex.set_sheet_grid(grid=grid)
+
+        # ex.sheet.ignore_errors({"number_stored_as_text": "A1:F200", })
+
 
         #
         # # прочитать данные о всех таблицах

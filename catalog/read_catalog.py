@@ -56,7 +56,7 @@ def get_section_code(catalog: Catalog = None, section_code: str = "") -> str | N
 
 
 def get_subsection_code(catalog: Catalog = None, subsection_code: str = "") -> str | None:
-    """ Ищет в словаре Отдел если находит, то возвращает его код """
+    """ Ищет в словаре Раздел если находит, то возвращает его код """
     if subsection_code:
         subsection = catalog.subsections.get(subsection_code, None)
         if subsection:
@@ -222,11 +222,13 @@ def read_catalog(catalog: Catalog = None, file_name: str = None, file_path: str 
         df.columns = columns
         df = df[columns].astype(pd.StringDtype())
         data_frame_info(df, mode='full')
+        #
         chapter_load(df, catalog)
         collection_load(df, catalog)
         section_load(df, catalog)
         subsection_load(df, catalog)
         table_load(df, catalog)
+        #
         del df
         gc.collect()
     else:
@@ -285,8 +287,8 @@ def quotes_parents_audit(catalog: Catalog = None):
 
 def catalog_fill() -> Catalog():
     catalog_item = Catalog()
-    path = r"F:\Kazak\GoogleDrive\1_KK\Job_CNAC\Python_projects\Quote_Catalog\src"
-    # path = r"..\src"
+    # path = r"F:\Kazak\GoogleDrive\1_KK\Job_CNAC\Python_projects\Quote_Catalog\src"
+    path = r"C:\Users\kazak.ke\PycharmProjects\Quotes_Catalog\src"
     file = r"catalog_3.xlsx"
     json_name = "catalog.json"
     if check_full_file_name(json_name, path):

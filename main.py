@@ -8,7 +8,7 @@ def application():
     print(f"<< {'-' * 50} >>\n")
     # catalog_none_check(catalog)
     # print(f"<< {'-' * 50} >>\n")
-    write_to_excel(catalog)
+    # write_to_excel(catalog)
 
 
 

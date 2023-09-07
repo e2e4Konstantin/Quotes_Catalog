@@ -1,4 +1,7 @@
 # https://htmlcolorcodes.com/
+# https://htmlcolorcodes.com/color-chart/
+
+from openpyxl.styles import Color
 
 headers = {
     'A:O': ['глава', 'сборник', 'отдел', 'раздел', 'таблица', 'расценка',
@@ -86,7 +89,7 @@ cell_styles = [
 
     {
         'name':       'chapter_line',
-        'font':       {'name': 'Calibri', 'bold': False, 'size': 8, 'color': "008000"},
+        'font':       {'name': 'Calibri', 'bold': False, 'size': 8, 'color': Color(rgb='00FF0000')},
         'alignment':  {'horizontal': 'left', 'vertical': 'bottom', 'wrap_text': False, 'shrink_to_fit': False, 'indent': 0},
         'fill':       {'patternType': None, 'fgColor': "FFFFFF"},
         'border':     {'style': None, 'color': "000000"}
