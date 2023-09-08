@@ -30,10 +30,17 @@ def out_error_message_and_exit(error_text: str, file_name: str):
     sys.exit()
 
 
+def output_message(text_red: str, text_yellow: str):
+    """ Выводит в консоль сообщение об ошибке. """
+    show_red = f"{console_colors['RED']}{text_red}{console_colors['RESET']}"
+    show_yellow = f"{console_colors['YELLOW']}{text_yellow}{console_colors['RESET']}"
+    print(f"{show_red}:\n\t-->> {show_yellow}")
+
+
+
 if __name__ == "__main__":
     fln = "files_tools_setting.py"
     print(f"{os.getcwd() = }")
     print(f"{os.path.dirname(fln) = }")
     print(f"{os.path.exists(fln) = }")
-    print(f"файл '{fln}' занят: {does_file_in_use(fln)}")
-    print(f"файл '' занят: {does_file_in_use('')}")
+

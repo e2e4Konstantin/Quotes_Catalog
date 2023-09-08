@@ -1,9 +1,16 @@
+import re
+from pprint import pprint
+
 from pydantic import BaseModel, Field
 import json
 
 import os
 
-classifier = ['chapters', 'collections', 'sections', 'subsections', 'tables']
+classifier = ['chapter', 'collection', 'section', 'subsection', 'table', 'quote']
+
+item_index = {item: i for i, item in enumerate(classifier)}
+
+legal_chars_pattern = re.compile("[^0-9-.]+")
 
 item_patterns = {
     'quote': r"^\s*\d+\.\d+(-\d+){2}\s*$",  # 3.1-24-1 Расценка
@@ -88,6 +95,60 @@ class Catalog(BaseModel):
         print("\t", f"отелов: {len(self.sections)}")
         print("\t", f"разделов: {len(self.subsections)}")
         print("\t", f"расценок: {len(self.quotes)}")
+
+    def details_info(self):
+        print(f"В каталоге:")
+        print(f"Глав: {len(self.chapters) = }")
+        print(f"Сборников: {len(self.collections) = }")
+        print(f"Отделов: {len(self.sections) = }")
+        print(f"Разделов: {len(self.subsections) = }")
+        print(f"Таблиц : {len(self.tables) = }")
+
+        print('....')
+        pprint(list(self.chapters.items())[:3], width=200)
+        print('....')
+        pprint(list(self.collections.items())[5:8], width=200)
+        null_chapter = set([collection.code for collection in self.collections.values() if not collection.chapter])
+        print(f"Сборники с нулевыми 'Главами' ({len(null_chapter)}): {null_chapter=}")
+        print('....')
+        pprint(list(self.sections.items())[5:8], width=200)
+        null_chapter = set([section.code for section in self.sections.values() if not section.chapter])
+        null_collection = set([section.code for section in self.sections.values() if not section.collection])
+        print(f"Отделы с нулевыми 'Главами' ({len(null_chapter)}): {null_chapter=}")
+        print(f"Отделы с нулевыми 'Сборниками' ({len(null_collection)}): {null_collection=}")
+        print('....')
+        pprint(list(self.subsections.items())[5:8], width=200)
+        null_chapters = set([subsection.code for subsection in self.subsections.values() if not subsection.chapter])
+        null_collection = set(
+            [subsection.code for subsection in self.subsections.values() if not subsection.collection]
+        )
+        null_section = set(
+            [subsection.code for subsection in self.subsections.values() if not subsection.section]
+        )
+        print(f"Разделы с нулевыми 'Главами' ({len(null_chapters)}): {null_chapters=}")
+        print(f"Разделы с нулевыми 'Сборниками' ({len(null_collection)}): {null_collection=}")
+        print(f"Разделы с нулевыми 'Отделами' ({len(null_section)}): {null_section=}")
+        print('....')
+
+        pprint(list(self.tables.items())[5:8], width=300)
+        null_chapters = set([table.code for table in self.tables.values() if not table.chapter])
+        null_collection = set([table.code for table in self.tables.values() if not table.collection])
+        null_section = set([table.code for table in self.tables.values() if not table.section])
+        null_subsection = set([table.code for table in self.tables.values() if not table.subsection])
+        print(f"Таблицы с нулевыми 'Главами' ({len(null_chapters)}): {null_chapters=}")
+        print(f"Таблицы с нулевыми 'Сборниками' ({len(null_collection)}): {null_collection=}")
+        print(f"Таблицы с нулевыми 'Отделами' ({len(null_section)}): {null_section=}")
+        print(f"Таблицы с нулевыми 'Разделами' ({len(null_subsection)}): {null_subsection=}")
+        print('....')
+
+
+
+
+
+
+
+
+
 
 
 

@@ -4,10 +4,9 @@ from pandas import DataFrame
 import json
 from pprint import pprint
 
-from filesutils import check_full_file_name, get_full_file_name, output_message, out_error_message_and_exit
-from settings import classifier, item_patterns, Chapter, Collection, Section, Subsection, Table, Quote, Catalog
+from filesutils import check_full_file_name, get_full_file_name, out_error_message_and_exit
+from settings import item_patterns, Chapter, Collection, Section, Subsection, Table, Quote, Catalog
 from catalog.get_selected_tables import get_selected_tables
-from catalog.extract_code import get_numeric_stamp, wildcard_remove, code_type, quote_code_check
 
 
 def data_frame_info(df: DataFrame, mode: str = 'short'):
@@ -65,138 +64,112 @@ def get_subsection_code(catalog: Catalog = None, subsection_code: str = "") -> s
     return None
 
 
-def parent_check(parent: str, code: str) -> bool:
-    if parent and code and parent == code:
-        return True
-    # output_message(f"родитель: {parent!r}", f"не совпадает с кодом: {code!r}")
-    return False
-
-
-def chapter_load(data: DataFrame, catalog: Catalog = None, columns: dict[str: int] = None):
+def chapter_load(data: DataFrame, catalog: Catalog = None):
     """ Загружает 'Главы' в catalog. """
     df = filter_df_data('chapter', data)
-    catalog.chapters = {
-        chapter[columns['CODE']]: Chapter(code=chapter[columns['CODE']], title=chapter[columns['TITLE']])
-        for chapter in df.to_records(index=False)
-    }
+    catalog.chapters = {chapter[0]: Chapter(code=chapter[0], title=chapter[1])
+                        for chapter in df.to_records(index=False)}
+    print(f"Глав добавлено в каталог:: {len(catalog.chapters) = }")
+    pprint(list(catalog.chapters.items())[:5], width=200)
+    print('....')
 
 
-def collection_load(data: DataFrame, catalog: Catalog = None, columns_index: dict[str: int] = None):
+def collection_load(data: DataFrame, catalog: Catalog = None):
     """ Загружает 'Сборники' в catalog. """
     df = filter_df_data('collection', data)
     for collection in df.to_records(index=False):
-        parent = collection[columns_index['PARENT']]
-        code = collection[columns_index['CODE']]
-        title = collection[columns_index['TITLE']]
-        parts_code = get_numeric_stamp(code, 'collection')
-        required_chapter_code = parts_code[0]
-        chapter = get_chapter_code(catalog, required_chapter_code)
-        if not chapter:
-            output_message(f"для 'Сборника': {collection}", f"не найдена глава: {required_chapter_code!r}")
-        if not parent_check(parent, chapter):
-            output_message(f"для 'Сборника': {collection}", f"не совпадают родитель и код: {parent!r}")
-        catalog.collections[code] = Collection(code=code, chapter=chapter, title=title)
+        required_chapter_code = collection[0].split('.')[0]
+        chapter_code = get_chapter_code(catalog, required_chapter_code)
+        if chapter_code:
+            catalog.collections[collection[0]] = Collection(
+                code=collection[0], chapter=chapter_code, title=collection[1]
+            )
+        else:
+            out_error_message_and_exit(f"для 'Сборника': {collection}", f"не найдена глава: {required_chapter_code!r}")
+    print(f"Сборников добавлено в каталог:: {len(catalog.collections) = }")
+    pprint(list(catalog.collections.items())[30:35], width=200)
+    print('....')
 
 
-def section_load(data: DataFrame, catalog: Catalog = None, columns_index: dict[str: int] = None):
+def section_load(data: DataFrame, catalog: Catalog = None):
     """ Загружает 'Отделы' в catalog. """
     df = filter_df_data('section', data)
     for section in df.to_records(index=False):
-        parent = section[columns_index['PARENT']]
-        code = section[columns_index['CODE']]
-        title = section[columns_index['TITLE']]
-
-        parts_code = get_numeric_stamp(code, 'section')
-        required_chapter_code = parts_code[0]
-        required_collection_code = f"{parts_code[0]}.{parts_code[1]}"
-
-        chapter = get_chapter_code(catalog, required_chapter_code)
-        collection = get_collection_code(catalog, required_collection_code)
-
-        catalog.sections[code] = Section(code=code, collection=collection, title=title, chapter=chapter)
-
-        if not chapter:
-            output_message(f"для 'Отдела': {section}", f"не найдена глава: {required_chapter_code!r}")
-        if not collection:
-            output_message(f"для 'Отдела': {section}", f"не найден Сборник: {required_collection_code!r}")
-        if not (parent_check(parent, chapter) or parent_check(parent, collection)):
-            output_message(f"для 'Отдела': {section}", f"не совпадают родитель {parent!r} и код: {code}")
+        required_chapter_code = section[0].split('.')[0]
+        chapter_code = get_chapter_code(catalog, required_chapter_code)
+        if chapter_code:
+            required_collection_code = section[0].split('-')[0]
+            collection_code = get_collection_code(catalog, required_collection_code)
+            catalog.sections[section[0]] = Section(
+                code=section[0], collection=collection_code, title=section[1], chapter=chapter_code
+            )
+        else:
+            out_error_message_and_exit(f"для 'Отдела': {section}", f"не найдена глава: {required_chapter_code!r}")
+    print(f"Отделов добавлено в каталог:: {len(catalog.sections) = }")
+    pprint(list(catalog.sections.items())[5:10], width=200)
+    null_collection = set([section.code for section in catalog.sections.values() if not section.collection])
+    print(f"Отделы с нулевыми 'Сборниками' ({len(null_collection)}): {null_collection=}")
+    print('....')
 
 
-def subsection_load(data: DataFrame, catalog: Catalog = None, columns_index: dict[str: int] = None):
+def subsection_load(data: DataFrame, catalog: Catalog = None):
     """ Загружает 'Разделы' в catalog. """
     df = filter_df_data('subsection', data)
     for subsection in df.to_records(index=False):
-        parent = subsection[columns_index['PARENT']]
-        code = subsection[columns_index['CODE']]
-        title = subsection[columns_index['TITLE']]
-
-        parts_code = get_numeric_stamp(code, 'subsection')
-        required_chapter_code = parts_code[0]
-        required_collection_code = f"{parts_code[0]}.{parts_code[1]}"
-        required_section_code = f"{parts_code[0]}.{parts_code[1]}-{parts_code[2]}"
-
-        chapter = get_chapter_code(catalog, required_chapter_code)
-        collection = get_collection_code(catalog, required_collection_code)
-        section = get_section_code(catalog, required_section_code)
-
-        catalog.subsections[code] = Subsection(
-            code=code, title=title, chapter=chapter, collection=collection, section=section
-        )
-
-        # if not chapter:
-        #     output_message(f"для 'Раздела': {subsection}", f"не найдена глава: {required_chapter_code!r}")
-        # if not collection:
-        #     output_message(f"для 'Раздела': {subsection}", f"не найден Сборник: {required_collection_code!r}")
-        # if not section:
-        #     output_message(f"для 'Раздела': {subsection}", f"не найден Отдел: {required_section_code!r}")
-        if not (parent_check(parent, chapter) or parent_check(parent, collection) or parent_check(parent, section)):
-            output_message(f"для 'Раздела': {subsection}", f"не совпадают родитель {parent!r} и код: {code}")
+        required_chapter_code = subsection[0].split('.')[0]
+        chapter_code = get_chapter_code(catalog, required_chapter_code)
+        if chapter_code:
+            required_collection_code = subsection[0].split('-')[0]
+            required_section_code = '-'.join(subsection[0].split('-')[:-1])
+            collection_code = get_collection_code(catalog, required_collection_code)
+            section_code = get_section_code(catalog, required_section_code)
+            catalog.subsections[subsection[0]] = Subsection(
+                code=subsection[0], title=subsection[1], chapter=chapter_code,
+                collection=collection_code, section=section_code,
+            )
+        else:
+            out_error_message_and_exit(f"для 'Раздела': {subsection}", f"не найдена глава: {required_chapter_code!r}")
+    print(f"Разделов добавлено в каталог: {len(catalog.subsections) = }")
+    pprint(list(catalog.subsections.items())[22:30], width=200)
+    null_collection = set([subsection.code for subsection in catalog.subsections.values() if not subsection.collection])
+    print(f"Разделы с нулевыми 'Сборниками' ({len(null_collection)}): {null_collection=}")
+    null_section = set([
+        subsection.code for subsection in catalog.subsections.values() if not subsection.section
+    ])
+    print(f"Разделы с нулевыми 'Отделами' ({len(null_section)}): {null_section=}")
+    print('....')
 
 
-def table_load(data: DataFrame, catalog: Catalog = None, columns_index: dict[str: int] = None):
+def table_load(data: DataFrame, catalog: Catalog = None):
     """ Загружает 'Таблицы' в catalog. """
     df = filter_df_data('table', data)
     for table in df.to_records(index=False):
-        parent = table[columns_index['PARENT']]
-        code = table[columns_index['CODE']]
-        title = table[columns_index['TITLE']]
+        required_chapter_code = table[0].split('.')[0]
+        chapter_code = get_chapter_code(catalog, required_chapter_code)
+        if chapter_code:
+            required_collection_code = table[0].split('-')[0]
+            required_section_code = '-'.join(table[0].split('-')[:2])
+            required_subsection_code = '-'.join(table[0].split('-')[:3])
 
-        parts_code = get_numeric_stamp(code, 'table')
-        required_chapter_code = parts_code[0]
-        required_collection_code = f"{parts_code[0]}.{parts_code[1]}"
-        required_section_code = f"{parts_code[0]}.{parts_code[1]}-{parts_code[2]}"
-        required_subsection_code = f"{parts_code[0]}.{parts_code[1]}-{parts_code[2]}-{parts_code[3]}"
+            collection_code = get_collection_code(catalog, required_collection_code)
+            section_code = get_section_code(catalog, required_section_code)
+            subsection_code = get_subsection_code(catalog, required_subsection_code)
 
-        chapter = get_chapter_code(catalog, required_chapter_code)
-        collection = get_collection_code(catalog, required_collection_code)
-        section = get_section_code(catalog, required_section_code)
-        subsection = get_subsection_code(catalog, required_subsection_code)
-
-        catalog.tables[code] = Table(
-            code=code, title=title, chapter=chapter, collection=collection, section=section, subsection=subsection
-        )
-
-        parents = [chapter, collection, section, subsection]
-        if True not in set(map(bool, parents)):  # all None
-            output_message(f"для Таблицы': {table}", f"нет ни одного родителя {parent!r}")
-
-        # if not chapter:
-        #     output_message(f"для Таблицы': {table}", f"не найдена глава: {required_chapter_code!r}")
-        # if not collection:
-        #     output_message(f"для Таблицы': {table}", f"не найден Сборник: {required_collection_code!r}")
-        # if not section:
-        #     output_message(f"для Таблицы': {table}", f"не найден Отдел: {required_section_code!r}")
-        # if not subsection:
-        #     output_message(f"для Таблицы': {table}", f"не найден Раздел: {required_subsection_code!r}")
-        # if not (
-        #         parent_check(parent, chapter) or parent_check(parent, collection) or
-        #         parent_check(parent, section) or parent_check(parent, subsection)
-        # ):
-        if parent not in parents:
-            output_message(f"для Таблицы': {table}", f"не совпадают родитель {parent!r} и код: {code}")
-
-
+            catalog.tables[table[0]] = Table(
+                code=table[0], title=table[1], chapter=chapter_code,
+                collection=collection_code, section=section_code, subsection=subsection_code
+            )
+        else:
+            out_error_message_and_exit(f"для 'Таблицы': {table}", f"не найдена глава: {required_chapter_code!r}")
+    print(f"Таблиц добавлено в каталог: {len(catalog.tables) = }")
+    pprint(list(catalog.tables.items())[20:25], width=200)
+    null_collection = set([table.code for table in catalog.tables.values() if not table.collection])
+    print(f"Таблицы с нулевыми 'Сборниками' ({len(null_collection)}): {null_collection=}")
+    null_section = set([table.code for table in catalog.tables.values() if not table.section])
+    print(f"Таблицы с нулевыми 'Отделами' ({len(null_section)}): {null_section=}")
+    null_subsection = set([table.code for table in catalog.tables.values() if not table.subsection])
+    print(f"Таблицы с нулевыми 'Разделами' ({len(null_subsection)}): {null_subsection=}")
+    print('....')
 
 
 def quotes_load(data: DataFrame, catalog: Catalog = None):
@@ -227,8 +200,6 @@ def data_frame_turn_out(file_name: str = None, file_path: str = None, sheet_name
         if full_name:
             try:
                 df: DataFrame = pd.read_excel(io=full_name, sheet_name=sheet_name)
-                columns = df.columns
-                df = df[columns].astype(pd.StringDtype())
                 pf = get_full_file_name(parquet_file_name, file_path)
                 df.to_parquet(pf, compression='gzip')
             except Exception as err:
@@ -244,20 +215,19 @@ def read_catalog(catalog: Catalog = None, file_name: str = None, file_path: str 
     """ Читает структуру (таблицы, сборники, отделы, разделы) из excel файла в catalog """
     df = data_frame_turn_out(file_name, file_path, sheet_name, 'p_catalog')
     if (df is not None) and not df.empty:
-        cut_column_names = df.columns[:3]
-        # оставляем только 3 столбца
+        cut_column_names = df.columns[:2]
+        # оставляем только 2 столбца
         df = df.reindex(columns=cut_column_names)
-        columns = ['PARENT', 'CODE', 'TITLE']
+        columns = ['CODE', 'TITLE']
         df.columns = columns
-        # df = df[columns].astype(pd.StringDtype())
+        df = df[columns].astype(pd.StringDtype())
         data_frame_info(df, mode='full')
         #
-        columns_index = {column: i for i, column in enumerate(columns)}
-        chapter_load(df, catalog, columns_index)
-        collection_load(df, catalog, columns_index)
-        section_load(df, catalog, columns_index)
-        subsection_load(df, catalog, columns_index)
-        table_load(df, catalog, columns_index)
+        chapter_load(df, catalog)
+        collection_load(df, catalog)
+        section_load(df, catalog)
+        subsection_load(df, catalog)
+        table_load(df, catalog)
         #
         del df
         gc.collect()
@@ -319,7 +289,7 @@ def catalog_fill() -> Catalog():
     catalog_item = Catalog()
     path = r"F:\Kazak\GoogleDrive\1_KK\Job_CNAC\Python_projects\Quote_Catalog\src"
     # path = r"C:\Users\kazak.ke\PycharmProjects\Quotes_Catalog\src"
-    file = r"catalog_4.xlsx"
+    file = r"catalog_3.xlsx"
     json_name = "catalog.json"
     if check_full_file_name(json_name, path):
         json_full_name = get_full_file_name(json_name, path)
@@ -327,8 +297,8 @@ def catalog_fill() -> Catalog():
             catalog_item = Catalog.model_validate_json(json.load(j_file))
     else:
         read_catalog(catalog_item, file, path, sheet_name='catalog')
-        # read_quotes(catalog_item, file, path, sheet_name='quotes')
-        # quotes_parents_audit(catalog_item)
+        read_quotes(catalog_item, file, path, sheet_name='quotes')
+        quotes_parents_audit(catalog_item)
         catalog_item.json_damp(json_name, path)
 
         quotes_without_table = [x for x in catalog_item.quotes.keys() if catalog_item.quotes[x].table is None]
@@ -336,8 +306,10 @@ def catalog_fill() -> Catalog():
     return catalog_item
 
 
+
 if __name__ == "__main__":
     # catalog = Catalog()
     # catalog.info()
     catalog = catalog_fill()
-    catalog.details_info()
+    catalog.info()
+

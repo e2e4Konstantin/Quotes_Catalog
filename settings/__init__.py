@@ -1,6 +1,6 @@
 from settings.colors_setting import console_colors
 from settings.quote_model import (
-    item_patterns,
+    item_patterns, item_index, legal_chars_pattern, classifier,
     Quote,
     Table,
     Subsection,
