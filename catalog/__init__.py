@@ -1,4 +1,4 @@
 from catalog.read_catalog import catalog_fill
-from catalog.write_catalog import catalog_none_check
+from catalog.catalog_none_check import catalog_none_check
 from catalog.extract_code import get_numeric_stamp
 from catalog.get_selected_tables import get_selected_tables

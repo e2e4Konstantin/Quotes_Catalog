@@ -5,8 +5,8 @@ from excelutils.data_out_to_excel import data_out_to_excel
 
 
 def write_to_excel(catalog: Catalog = None):
-    # path = r"F:\Kazak\GoogleDrive\1_KK\Job_CNAC\Python_projects\Quote_Catalog\output"
-    path = r"C:\Users\kazak.ke\PycharmProjects\Quotes_Catalog\output"
+    path = r"F:\Kazak\GoogleDrive\1_KK\Job_CNAC\Python_projects\Quote_Catalog\output"
+    # path = r"C:\Users\kazak.ke\PycharmProjects\Quotes_Catalog\output"
     file = r"output_template.xlsx"
     full_name = get_full_file_name(file, path)
     if full_name and os.path.isfile(full_name):

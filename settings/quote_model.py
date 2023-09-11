@@ -40,6 +40,8 @@ class Table(BaseModel):
     section: str | None = Field(pattern=item_patterns['section'])
     collection: str | None = Field(pattern=item_patterns['collection'])
     chapter: str = Field(pattern=item_patterns['chapter'])
+    attributes: str = ""
+    parameters: str = ""
 
 
 # 8.2-1-1 Раздел 1.1.1. Ультразвуковой контроль и механические испытания сварных соединений газопроводов
@@ -102,7 +104,8 @@ class Catalog(BaseModel):
         print(f"Сборников: {len(self.collections) = }")
         print(f"Отделов: {len(self.sections) = }")
         print(f"Разделов: {len(self.subsections) = }")
-        print(f"Таблиц : {len(self.tables) = }")
+        print(f"Таблиц: {len(self.tables) = }")
+        print(f"Расценок: {len(self.quotes) = }")
 
         print('....')
         pprint(list(self.chapters.items())[:3], width=200)
@@ -140,7 +143,10 @@ class Catalog(BaseModel):
         print(f"Таблицы с нулевыми 'Отделами' ({len(null_section)}): {null_section=}")
         print(f"Таблицы с нулевыми 'Разделами' ({len(null_subsection)}): {null_subsection=}")
         print('....')
-
+        pprint(list(self.quotes.items())[5:8], width=300)
+        null_tables = set([quote.code for quote in self.quotes.values() if not quote.table])
+        print(f"Расценки с нулевыми 'Таблицами' ({len(null_tables)}): {null_tables=}")
+        print('....')
 
 
 

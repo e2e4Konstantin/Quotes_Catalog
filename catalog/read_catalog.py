@@ -5,7 +5,7 @@ import json
 from pprint import pprint
 
 from filesutils import check_full_file_name, get_full_file_name, output_message, out_error_message_and_exit
-from settings import classifier, item_patterns, Chapter, Collection, Section, Subsection, Table, Quote, Catalog
+from settings import item_index, classifier, item_patterns, Chapter, Collection, Section, Subsection, Table, Quote, Catalog
 from catalog.get_selected_tables import get_selected_tables
 from catalog.extract_code import get_numeric_stamp, wildcard_remove, code_type, quote_code_check
 
@@ -197,15 +197,38 @@ def table_load(data: DataFrame, catalog: Catalog = None, columns_index: dict[str
             output_message(f"для Таблицы': {table}", f"не совпадают родитель {parent!r} и код: {code}")
 
 
-
-
-def quotes_load(data: DataFrame, catalog: Catalog = None):
+def quotes_load(data: DataFrame, catalog: Catalog = None, columns_index: dict[str: int] = None):
     """ Загружает 'Расценки' в catalog. """
     for quote in data.to_records(index=False):
-        catalog.quotes[quote[0]] = Quote(code=quote[0], title=quote[1], measure=quote[2], table=None, chapter=None,
-                                         collection=None, section=None, subsection=None)
-    print(f"Расценок добавлено в каталог: {len(catalog.quotes) = }")
-    pprint(list(catalog.quotes.items())[20:25], width=300)
+        parent = quote[columns_index['PARENT']]
+        code = quote[columns_index['CODE']]
+        title = quote[columns_index['TITLE']]
+        measure = quote[columns_index['MEASURE']]
+
+        if not parent or code_type(parent) != item_index['table']:
+            output_message(f"для Расценки: {code}", f"кривая родительская таблица: {parent!r}")
+
+        parts_code = get_numeric_stamp(parent, 'table')
+        if parts_code:
+            table = catalog.tables.get(parent, None)
+            table_code = table.code if table else None
+            chapter = catalog.chapters.get(parts_code[0], None)
+            chapter_code = chapter.code if chapter else None
+            collection = catalog.collections.get(f"{parts_code[0]}.{parts_code[1]}", None)
+            collection_code = collection.code if collection else None
+            section = catalog.sections.get(f"{parts_code[0]}.{parts_code[1]}-{parts_code[2]}", None)
+            section_code = section.code if section else None
+            subsection = catalog.subsections.get(f"{parts_code[0]}.{parts_code[1]}-{parts_code[2]}-{parts_code[3]}", None)
+            subsection_code = subsection.code if subsection else None
+            catalog.quotes[code] = Quote(
+                code=code, title=title, measure=measure, table=table_code, chapter=chapter_code,
+                collection=collection_code, section=section_code, subsection=subsection_code
+            )
+        else:
+            catalog.quotes[code] = Quote(
+                code=code, title=title, measure=measure, table=parent,
+                chapter=None, collection=None, section=None, subsection=None
+            )
 
 
 def data_frame_turn_out(file_name: str = None, file_path: str = None, sheet_name: str = None,
@@ -270,14 +293,16 @@ def read_quotes(catalog: Catalog = None, file_name: str = None, file_path: str =
     """ Читает расценки из excel файла в catalog """
     df = data_frame_turn_out(file_name, file_path, sheet_name, 'p_quotes')
     if (df is not None) and not df.empty:
-        cut_column_names = df.columns[:3]
-        # оставляем только 3 столбца
+        cut_column_names = df.columns[:4]
+        # оставляем только 4 столбца
         df = df.reindex(columns=cut_column_names)
-        columns = ['CODE', 'TITLE', 'MEASURE']
+        columns = ['PARENT', 'CODE', 'TITLE', 'MEASURE']
         df.columns = columns
-        df = df[columns].astype(pd.StringDtype())
+        # df = df[columns].astype(pd.StringDtype())
         data_frame_info(df, mode='full')
-        quotes_load(df, catalog)
+        columns_index = {column: i for i, column in enumerate(columns)}
+
+        quotes_load(df, catalog, columns_index)
         del df
         gc.collect()
     else:
@@ -285,34 +310,34 @@ def read_quotes(catalog: Catalog = None, file_name: str = None, file_path: str =
         raise TypeError(OSError)
 
 
-def quotes_parents_audit(catalog: Catalog = None):
-    """ Заполняет поля родителей для всех расценок. Родителей расценки: таблицы, разделы, отделы, сборники, главы. """
-    quotes = catalog.quotes
-    if len(quotes) > 0:
-        print(f"всего расценок в каталоге: ({len(quotes)})")
-        for quote in quotes.keys():
-            # print(f"расценка {quote=}: {catalog.quotes[quote]}")
-            chapter = quote.split('.')[0]
-            collection = quote.split('-', 1)[0]
-            table_number = quote.split('-')[-2]
-            catalog.quotes[quote].chapter = chapter
-            catalog.quotes[quote].collection = collection
-            # все таблицы для сборника
-            tables = get_selected_tables(catalog, selected_chapter=chapter, selected_collection=collection)
-            if tables:
-                # print(f"все таблицы для сборника: ({len(tables)}): {tables}")
-                quote_tables = [x for x in tables if x.split('-')[-1] == table_number]
-                # print(f"таблицы для расценки ({len(quote_tables)}): {quote_tables}")
-                if quote_tables:
-                    # print(f"{catalog.tables[quote_tables[0]].code!r} {catalog.tables[quote_tables[0]].title}")
-                    catalog.quotes[quote].table = catalog.tables[quote_tables[0]].code
-                    catalog.quotes[quote].subsection = catalog.tables[quote_tables[0]].subsection
-                    catalog.quotes[quote].section = catalog.tables[quote_tables[0]].section
-                else:
-                    catalog.quotes[quote].table = None
-                    catalog.quotes[quote].subsection = None
-                    catalog.quotes[quote].section = None
-            # print(f"расценка: {quotes[quote]}")
+# def quotes_parents_audit(catalog: Catalog = None):
+#     """ Заполняет поля родителей для всех расценок. Родителей расценки: таблицы, разделы, отделы, сборники, главы. """
+#     quotes = catalog.quotes
+#     if len(quotes) > 0:
+#         print(f"всего расценок в каталоге: ({len(quotes)})")
+#         for quote in quotes.keys():
+#             # print(f"расценка {quote=}: {catalog.quotes[quote]}")
+#             chapter = quote.split('.')[0]
+#             collection = quote.split('-', 1)[0]
+#             table_number = quote.split('-')[-2]
+#             catalog.quotes[quote].chapter = chapter
+#             catalog.quotes[quote].collection = collection
+#             # все таблицы для сборника
+#             tables = get_selected_tables(catalog, selected_chapter=chapter, selected_collection=collection)
+#             if tables:
+#                 # print(f"все таблицы для сборника: ({len(tables)}): {tables}")
+#                 quote_tables = [x for x in tables if x.split('-')[-1] == table_number]
+#                 # print(f"таблицы для расценки ({len(quote_tables)}): {quote_tables}")
+#                 if quote_tables:
+#                     # print(f"{catalog.tables[quote_tables[0]].code!r} {catalog.tables[quote_tables[0]].title}")
+#                     catalog.quotes[quote].table = catalog.tables[quote_tables[0]].code
+#                     catalog.quotes[quote].subsection = catalog.tables[quote_tables[0]].subsection
+#                     catalog.quotes[quote].section = catalog.tables[quote_tables[0]].section
+#                 else:
+#                     catalog.quotes[quote].table = None
+#                     catalog.quotes[quote].subsection = None
+#                     catalog.quotes[quote].section = None
+#             # print(f"расценка: {quotes[quote]}")
 
 
 def catalog_fill() -> Catalog():
@@ -327,8 +352,7 @@ def catalog_fill() -> Catalog():
             catalog_item = Catalog.model_validate_json(json.load(j_file))
     else:
         read_catalog(catalog_item, file, path, sheet_name='catalog')
-        # read_quotes(catalog_item, file, path, sheet_name='quotes')
-        # quotes_parents_audit(catalog_item)
+        read_quotes(catalog_item, file, path, sheet_name='quotes')
         catalog_item.json_damp(json_name, path)
 
         quotes_without_table = [x for x in catalog_item.quotes.keys() if catalog_item.quotes[x].table is None]

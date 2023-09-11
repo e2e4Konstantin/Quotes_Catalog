@@ -30,7 +30,7 @@ def out_error_message_and_exit(error_text: str, file_name: str):
     sys.exit()
 
 
-def output_message(text_red: str, text_yellow: str):
+def output_message(text_red: str = None, text_yellow: str = None):
     """ Выводит в консоль сообщение об ошибке. """
     show_red = f"{console_colors['RED']}{text_red}{console_colors['RESET']}"
     show_yellow = f"{console_colors['YELLOW']}{text_yellow}{console_colors['RESET']}"

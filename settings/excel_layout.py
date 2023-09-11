@@ -1,7 +1,8 @@
 # https://htmlcolorcodes.com/
 # https://htmlcolorcodes.com/color-chart/
 
-from openpyxl.styles import Color
+from openpyxl.styles import Color, Font
+from settings import classifier, item_index
 
 headers = {
     'A:O': ['глава', 'сборник', 'отдел', 'раздел', 'таблица', 'расценка',
@@ -22,8 +23,17 @@ headers = {
     'O': 'материал',
 }
 
-width_columns = {'A': 6, 'B': 6, 'C': 6, 'D': 6, 'E': 8, 'F': 7, 'G': 45, 'H': 7, 'I': 7, 'J': 7, 'K': 7, 'L': 7, 'M': 7}
+items_fonts = {
+                item_index['chapter']: Font(name='Calibri', color=Color(rgb='00D35400'), size=8, bold=False),
+                item_index['collection']: Font(name='Calibri', color=Color(rgb='34495E'), size=8, bold=False),
+                item_index['section']: Font(name='Calibri', color=Color(rgb='5B2C6F'), size=8, bold=False),
+                item_index['subsection']: Font(name='Calibri', color=Color(rgb='0E6655'), size=8, bold=False),
+                item_index['table']: Font(name='Calibri', color=Color(rgb='001B2631'), size=8, bold=False),
+                item_index['quote']: Font(name='Calibri', color=Color(rgb='000000'), size=8, bold=False),
+               }
 
+
+width_columns = {'A': 6, 'B': 6, 'C': 6, 'D': 6, 'E': 10, 'F': 7, 'G': 45, 'H': 7, 'I': 7, 'J': 7, 'K': 7, 'L': 7, 'M': 7}
 
 colors_styling = {'further_quotes': 'F9FAFA', 'table_name': 'EEF3F8', 'attributes': 'F1F1F9', 'parameters': 'EFF6F2', 'title_basic': "00FAFAF4", 'title_attributes': "00daeef3", 'title_parameter': "00fde9d9", 'c3': "0099CC00", 'c4': "00FFCC00", 'c5': "000066CC", 'c6': "00666699", 'c7': "00C0C0C0", 'c8': "00FF99CC"}
 

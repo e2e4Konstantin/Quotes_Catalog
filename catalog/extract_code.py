@@ -74,8 +74,9 @@ def get_subsection_numeric(code: str = None) -> tuple | None:
 
 
 def get_numeric_stamp(code: str = None, target_name: str = '') -> tuple | None:
-    """ Выделяет из входного кода значение: главы, сборника, отдела, раздела
+    """ Выделяет из входного кода str значение: главы, сборника, отдела, раздела
         Возвращает кортеж строк. """
+    code = wildcard_remove(code)
     extract = None
     if code:
         match target_name:
@@ -90,7 +91,7 @@ def get_numeric_stamp(code: str = None, target_name: str = '') -> tuple | None:
             case 'table':
                 extract = re.match(r"^\s*((\d+)\.(\d+)-(\d+)-(\d+)-(\d+)-(\d+))\s*$", code)
             case 'quote':
-                extract = re.match(r"^\s*((\d+)\.(\d+)-(\d+)-(\d+))\s*", code)
+                extract = re.match(r"^\s*((\d+)\.(\d+)-(\d+)-(\d+))\s*$", code)
             case _:
                 return None
         if extract:
@@ -126,6 +127,7 @@ def code_type(code: str = None) -> int | None:
 
 def quote_code_check(code: str = None) -> int | None:
     """  Определяет что шифр кодирует расценку. """
+    code = wildcard_remove(code)
     if code and re.fullmatch(r"^\s*((\d+)\.(\d+)-(\d+)-(\d+))\s*", wildcard_remove(code)):
         return item_index['quote']
     return None
@@ -140,6 +142,8 @@ if __name__ == "__main__":
     print(classifier[code_type('9.3-7-77')])
     print(classifier[code_type('9.3-7-2-4-33')])
     print(classifier[code_type('  #$%\t3#$%\t.3-7-2#$%\t')])
+    print(classifier[quote_code_check('3.11-59-2')])
+
     x = code_type('3.3-7-2-9-9-6')
     print(classifier[x]) if x else print(x)
     print(classifier[quote_code_check('9.3-7-77')])
@@ -155,3 +159,7 @@ if __name__ == "__main__":
     print(get_numeric_stamp('7.9-5-88', 'subsection'))
     print(get_numeric_stamp('3.1-1-5-0-2', 'table'))
     print(get_numeric_stamp('3.11-59-2', 'quote'))
+
+    print(list(map(int, ['4', '85'])))
+    print(tuple(map(int, get_numeric_stamp('3.11-59-2', 'quote'))))
+

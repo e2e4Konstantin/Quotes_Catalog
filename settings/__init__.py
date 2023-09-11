@@ -12,4 +12,4 @@ from settings.quote_model import (
 
 from settings.excel_model import ExcelFile
 
-# catalog,
+from settings.excel_layout import items_fonts
