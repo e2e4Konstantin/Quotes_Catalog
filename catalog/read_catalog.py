@@ -1,10 +1,11 @@
+import os
 import pandas as pd
 import gc
 from pandas import DataFrame
 import json
 from pprint import pprint
 
-from filesutils import check_full_file_name, get_full_file_name, output_message, out_error_message_and_exit
+from filesutils import check_full_file_name, get_full_file_name, output_message, out_error_message_and_exit, location
 from settings import item_index, classifier, item_patterns, Chapter, Collection, Section, Subsection, Table, Quote, Catalog
 from catalog.get_selected_tables import get_selected_tables
 from catalog.extract_code import get_numeric_stamp, wildcard_remove, code_type, quote_code_check
@@ -231,15 +232,18 @@ def quotes_load(data: DataFrame, catalog: Catalog = None, columns_index: dict[st
             )
 
 
-def data_frame_turn_out(file_name: str = None, file_path: str = None, sheet_name: str = None,
-                        out_file_name: str = "") -> DataFrame | None:
+def data_frame_turn_out(file_name: str, sheet_name: str, out_file_name: str = "") -> DataFrame | None:
     """ Прочитать данные из файла и вернуть DataFrame """
+    file_path, name = os.path.split(file_name)
     if out_file_name:
         parquet_file_name = f"{out_file_name}.gzip"
     else:
-        parquet_file_name = f"{file_name[:-4]}gzip"
-    parquet_full_name = check_full_file_name(parquet_file_name, file_path)
+        parquet_file_name = f"{name[:-4]}gzip"
+
     df = DataFrame()
+
+    parquet_full_name = check_full_file_name(parquet_file_name, file_path)
+
     if parquet_full_name:
         try:
             df: DataFrame = pd.read_parquet(parquet_full_name)
@@ -263,9 +267,9 @@ def data_frame_turn_out(file_name: str = None, file_path: str = None, sheet_name
     return None
 
 
-def read_catalog(catalog: Catalog = None, file_name: str = None, file_path: str = None, sheet_name: str = None):
+def read_catalog(catalog: Catalog, file_name: str, sheet_name: str):
     """ Читает структуру (таблицы, сборники, отделы, разделы) из excel файла в catalog """
-    df = data_frame_turn_out(file_name, file_path, sheet_name, 'p_catalog')
+    df = data_frame_turn_out(file_name, sheet_name, 'catalog_parquet')
     if (df is not None) and not df.empty:
         cut_column_names = df.columns[:3]
         # оставляем только 3 столбца
@@ -291,7 +295,7 @@ def read_catalog(catalog: Catalog = None, file_name: str = None, file_path: str 
 
 def read_quotes(catalog: Catalog = None, file_name: str = None, file_path: str = None, sheet_name: str = None):
     """ Читает расценки из excel файла в catalog """
-    df = data_frame_turn_out(file_name, file_path, sheet_name, 'p_quotes')
+    df = data_frame_turn_out(file_name, sheet_name, 'quotes_parquet')
     if (df is not None) and not df.empty:
         cut_column_names = df.columns[:4]
         # оставляем только 4 столбца
@@ -340,20 +344,15 @@ def read_quotes(catalog: Catalog = None, file_name: str = None, file_path: str =
 #             # print(f"расценка: {quotes[quote]}")
 
 
-def catalog_fill() -> Catalog():
+def catalog_fill(catalog_file: str, catalog_json: str) -> Catalog():
     catalog_item = Catalog()
-    path = r"F:\Kazak\GoogleDrive\1_KK\Job_CNAC\Python_projects\Quote_Catalog\src"
-    # path = r"C:\Users\kazak.ke\PycharmProjects\Quotes_Catalog\src"
-    file = r"catalog_4.xlsx"
-    json_name = "catalog.json"
-    if check_full_file_name(json_name, path):
-        json_full_name = get_full_file_name(json_name, path)
-        with open(json_full_name, "r", encoding='utf-8') as j_file:
+    if os.path.exists(catalog_json):
+        with open(catalog_json, "r", encoding='utf-8') as j_file:
             catalog_item = Catalog.model_validate_json(json.load(j_file))
     else:
-        read_catalog(catalog_item, file, path, sheet_name='catalog')
-        read_quotes(catalog_item, file, path, sheet_name='quotes')
-        catalog_item.json_damp(json_name, path)
+        read_catalog(catalog_item, catalog_file, sheet_name='catalog')
+        read_quotes(catalog_item, catalog_file, sheet_name='quotes')
+        catalog_item.json_damp(catalog_json)
 
         quotes_without_table = [x for x in catalog_item.quotes.keys() if catalog_item.quotes[x].table is None]
         print(f"расценки без таблиц: {quotes_without_table}")
@@ -361,7 +360,6 @@ def catalog_fill() -> Catalog():
 
 
 if __name__ == "__main__":
-    # catalog = Catalog()
-    # catalog.info()
-    catalog = catalog_fill()
+    catalog_file, catalog_json, x = location("office")
+    catalog = catalog_fill(catalog_file, catalog_json)
     catalog.details_info()

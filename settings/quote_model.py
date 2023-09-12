@@ -26,6 +26,10 @@ class Quote(BaseModel):
     code: str = Field(pattern=item_patterns['quote'])  # 3.1-24-1
     title: str
     measure: str
+    stat: int | None = None
+    flag: str = ""
+    basic_slave: str = ""
+    link_cod: str = ""
     table: str | None = Field(pattern=item_patterns['table'])  # 3.1-1-5-0-24
     subsection: str | None = Field(pattern=item_patterns['subsection'])
     section: str | None = Field(pattern=item_patterns['section'])

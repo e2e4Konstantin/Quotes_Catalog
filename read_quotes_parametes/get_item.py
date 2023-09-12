@@ -38,7 +38,7 @@ def get_all_attributes_for_quote_from_data_by_index(quote_cod: str) -> list:
     return attributes_list
 
 
-def get_all_parameters_for_quote_from_data_by_index(quote_cod: str) -> dict:
+def get_all_parameters_for_quote_from_data_by_index(quote_cod: str) -> list:
     # column_names = ["quote", "name", "left", "right", "measure", "step", "type"]
     parameters = data_bank["parameters"]
 

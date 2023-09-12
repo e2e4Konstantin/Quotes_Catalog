@@ -37,6 +37,34 @@ def output_message(text_red: str = None, text_yellow: str = None):
     print(f"{show_red}:\n\t-->> {show_yellow}")
 
 
+def location(place_point: str = 'office'):
+    match place_point:
+        case 'office':
+            path_point = r"C:\Users\kazak.ke\PycharmProjects\Quotes_Catalog"
+        case 'home':
+            path_point = r"F:\Kazak\GoogleDrive\1_KK\Job_CNAC\Python_projects\Quote_Catalog"
+        case _:
+            path_point = os.path.abspath(os.getcwd())
+            print(f'Неизвестное место {place_point!r}')
+    catalog_src_file = r"catalog_3_68.xlsx"
+    catalog_json_file_name = f"{catalog_src_file[:-5]}.json"
+    parameters_src_file_name = r"template_3_68_output.xlsx"
+
+    src_path = os.path.join(path_point, "src")
+
+    catalog_file = os.path.abspath(os.path.join(src_path, catalog_src_file))
+    catalog_json = os.path.abspath(os.path.join(src_path, catalog_json_file_name))
+    parameters_src_file = os.path.abspath(os.path.join(src_path, parameters_src_file_name))
+
+    if not os.path.exists(catalog_file):
+        out_error_message_and_exit(f"фал с данными для 'Каталога' не найден", f"{catalog_file}")
+
+    if not os.path.exists(parameters_src_file):
+        out_error_message_and_exit(f"фал с Параметризацией не найден", f"{parameters_src_file}")
+
+    return catalog_file, catalog_json, parameters_src_file
+
+
 
 if __name__ == "__main__":
     fln = "files_tools_setting.py"
