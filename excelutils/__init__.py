@@ -1,1 +1,1 @@
-from excelutils.write_to_excel import write_to_excel
+from excelutils.data_out_to_excel import data_out_to_excel

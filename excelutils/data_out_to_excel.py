@@ -1,55 +1,51 @@
+import os
+
 from settings import Catalog, ExcelFile
 
 from excelutils.create_basic_header import create_basic_header
 from excelutils.chapters_output import chapters_output
+from filesutils import get_full_file_name, does_file_in_use, out_error_message_and_exit
 
 
-def data_out_to_excel(catalog: Catalog = None, full_name: str = None, grid: bool = False):
+def generate_output_file_name(src_file_name: str) -> str | None:
+    """
+    Создает новое имя для выходного файла
+    :param src_file_name: абсолютное имя файла с данными
+    :return:
+    """
+    path, file = os.path.split(src_file_name)   # имя файла и маршрут
+    path = os.path.split(path)[0]               # убираем последнюю папку из маршрута
+    output_path = os.path.join(path, "output")  # добавляем в маршрут папку
+    output_file = f"renew_{file}"               # изменяем имя файла
+    full_name = get_full_file_name(output_file, output_path)
+    if full_name and os.path.isfile(full_name):
+        if not does_file_in_use(full_name):
+            os.remove(full_name)
+            return full_name
+        else:
+            out_error_message_and_exit(f"файл занят другим приложением: ", full_name)
+    elif os.path.isdir(output_path):
+        return full_name
+    else:
+        out_error_message_and_exit(f"нет такой папки: ", output_path)
+    return None
+
+
+def data_out_to_excel(catalog: Catalog, data_file: str, grid: bool = False):
     """ Подготовка выходного файла. Создает шапку таблицы. Выводит главы"""
-    sheets_name = ["name", "stat"]
-    output = ExcelFile(full_name)
+    output_name = generate_output_file_name(data_file)
+    output = ExcelFile(output_name)
     with output as ex:
+        sheets_name = ["name", "stat"]
         ex.create_sheets(sheets_name)
         ex.styles_init()
         ex.sheet = ex.book['name']
-
+        ex.set_sheet_grid(grid=grid)
         ex.sheet.sheet_properties.outlinePr.summaryBelow = False  # группировка сверху
+
         create_basic_header(ex.sheet)
         start_chapter_row = 4
-
         chapters_output(ex.sheet, catalog, start_chapter_row)
 
-        ex.set_sheet_grid(grid=grid)
 
 
-
-
-
-        # ex.sheet.ignore_errors({"number_stored_as_text": "A1:F200", })
-        #
-        # # прочитать данные о всех таблицах
-        # tables = get_all_tables_from_data()
-        # for table in tables:
-        #     table_time = time.monotonic()
-        #     table_cod = table[0]
-        #     quotes = get_all_quotes_for_tables_from_data_by_index(table_cod)
-        #     if len(quotes) > 0:
-        #         put_table_to_sheet(ex.sheet, table, table_row)
-        #         quote_row = table_row+1
-        #         for quote in quotes:
-        #             quote_cod = quote[2]
-        #             put_quote_to_sheet(ex.sheet, quote, quote_row)
-        #             attributes = get_all_attributes_for_quote_from_data_by_index(quote_cod)   # получаем атрибуты для расценки из датасета
-        #             table_attributes = table[2]
-        #             put_attributes_to_sheet(ex.sheet, attributes, quote_row, table_attributes)
-        #
-        #             table_parameters = table[3]
-        #             parameters = get_all_parameters_for_quote_from_data_by_index(quote_cod)  # получаем параметры для расценки из датасета
-        #
-        #             attribute_counter = len([x.strip() for x in table_attributes.split(',')])
-        #             put_parameters_to_sheet(ex.sheet, parameters, quote_row, table_parameters, attribute_counter)
-        #
-        #             quote_row += 1
-        #         table_row = quote_row + step_table_row
-        #         delta_time = time.monotonic() - table_time
-        #         print(f"\tвремя обработки таблицы '{table_cod :<15s}': {f'{delta_time :0.4f}' :>10s} сек.")

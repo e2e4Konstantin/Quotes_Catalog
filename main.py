@@ -2,16 +2,18 @@ import os
 from catalog import catalog_fill, catalog_none_check
 from read_quotes_parametes import read_parameters, free_data_bank
 from read_quotes_parametes.common_data import data_bank
-from excelutils import write_to_excel
+from excelutils import data_out_to_excel
 from filesutils import location
 
+from settings import Catalog
 
 
 
+loc = {1: "home", 2: "office"}
 
 
 def application():
-    catalog_file, catalog_json, parameterization_file = location("office")
+    catalog_file, catalog_json, parameterization_file = location(loc[1])
     catalog = catalog_fill(catalog_file, catalog_json)
     catalog.info()
     catalog.details_info()
@@ -21,9 +23,9 @@ def application():
     read_parameters(catalog, src_file=parameterization_file)
     print(data_bank.keys())
     print(f"<< {'-' * 50} >>\n")
-    free_data_bank()
+    # free_data_bank()
 
-    write_to_excel(catalog)
+    data_out_to_excel(catalog, parameterization_file)
 
 
 if __name__ == "__main__":

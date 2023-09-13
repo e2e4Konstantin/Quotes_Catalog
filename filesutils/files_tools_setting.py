@@ -12,12 +12,13 @@ def check_full_file_name(file_name: str, file_path: str = "") -> str | None:
     return None
 
 
-def get_full_file_name(file_name: str, file_path: str = "") -> str | None:
-    """ Создает абсолютный путь к файлу. """
-    if file_name:
-        p1 = os.path.join("" if file_path is None else file_path, file_name)
-        p2 = os.path.abspath(p1)
-        return p2
+def get_full_file_name(file_name: str, file_path: str) -> str | None:
+    """ Создает путь к файлу из файла и маршрута. Проверяет что этот путь корректный """
+    if file_name and file_path:
+        splicing = os.path.normpath(os.path.join(file_path, file_name))
+        if os.path.isabs(splicing):
+            return splicing
+        output_message(f"Некорректная ссылка:", f" {splicing}")
     return None
 
 
