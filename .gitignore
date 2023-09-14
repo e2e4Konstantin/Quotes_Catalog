@@ -3,3 +3,6 @@
 **/__pycache__
 __pycache__/
 output/*
+/src/catalog_5_67.json
+/src/catalog_parquet.gzip
+/src/quotes_parquet.gzip
