@@ -13,7 +13,7 @@ loc = {1: "home", 2: "office"}
 
 
 def application():
-    catalog_file, catalog_json, parameterization_file = location(loc[1])
+    catalog_file, catalog_json, parameterization_file = location(loc[2])
     catalog = catalog_fill(catalog_file, catalog_json)
     catalog.info()
     catalog.details_info()
