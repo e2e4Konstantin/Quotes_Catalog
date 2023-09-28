@@ -47,9 +47,9 @@ def location(place_point: str = 'office'):
         case _:
             path_point = os.path.abspath(os.getcwd())
             print(f'Неизвестное место {place_point!r}')
-    catalog_src_file = r"catalog_5_67.xlsx"                         #    r"catalog_3_68.xlsx"
+    catalog_src_file = r"catalog_3_68.xlsx"                         #    r"catalog_3_68.xlsx"
     catalog_json_file_name = f"{catalog_src_file[:-5]}.json"
-    parameters_src_file_name = r"template_5_67_output.xlsx"         #   r"template_3_68_output.xlsx"
+    parameters_src_file_name = r"template_3_68_output.xlsx"         #   r"template_3_68_output.xlsx" template_4_68_output.xlsx template_5_67_output.xlsx
 
     src_path = os.path.join(path_point, "src")
 

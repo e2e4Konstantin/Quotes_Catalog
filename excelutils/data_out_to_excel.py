@@ -46,6 +46,8 @@ def data_out_to_excel(catalog: Catalog, data_file: str, grid: bool = False):
         create_basic_header(ex.sheet)
         start_chapter_row = 4
         chapters_output(ex.sheet, catalog, start_chapter_row)
+        # # вставляем один столбец
+        # ex.sheet.insert_cols(1)
 
 
 

@@ -17,7 +17,7 @@ def _table_line_output(code: str, catalog: Catalog, sheet: worksheet, row: int) 
     sheet.cell(row=row, column=column_index_from_string('C')).value = table.section
     sheet.cell(row=row, column=column_index_from_string('D')).value = table.subsection
     sheet.cell(row=row, column=column_index_from_string('E')).value = table.code
-    sheet.cell(row=row, column=column_index_from_string('E')).value = ""
+    sheet.cell(row=row, column=column_index_from_string('F')).value = ""    #table.code
     sheet.cell(row=row, column=column_index_from_string('G')).value = table.title
     # группировка 5
     group_number = item_index['table'] + 1
